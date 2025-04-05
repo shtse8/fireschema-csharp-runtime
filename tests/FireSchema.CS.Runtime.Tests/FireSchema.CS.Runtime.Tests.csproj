@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework> <!-- Use a suitable .NET version for testing -->
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable> <!-- This project shouldn't be packed as a NuGet package -->
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference the main runtime library project -->
+    <ProjectReference Include="..\..\src\FireSchema.CS.Runtime.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Testing Framework Dependencies -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" /> <!-- Check for latest versions -->
+    <PackageReference Include="MSTest.TestAdapter" Version="2.2.10" />
+    <PackageReference Include="MSTest.TestFramework" Version="2.2.10" />
+    <PackageReference Include="coverlet.collector" Version="3.1.2" />
+    <!-- Add mocking library if needed, e.g., Moq -->
+    <!-- <PackageReference Include="Moq" Version="4.18.4" /> -->
+    <!-- Add Firestore Emulator dependency if needed for integration tests -->
+    <!-- <PackageReference Include="Google.Cloud.Firestore.Admin.V1" Version="..."/> -->
+  </ItemGroup>
+
+</Project>
