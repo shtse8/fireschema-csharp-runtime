@@ -34,7 +34,7 @@ namespace FireSchema.CS.Runtime.Core
 
             // TODO: Potentially add validation for collectionPath format?
 
-            FirestoreCollection = firestoreDb.Collection(collectionPath).WithConverter(new FirestoreDataConverter<T>());
+            FirestoreCollection = firestoreDb.Collection(collectionPath); // Remove WithConverter
         }
 
         /// <summary>
@@ -64,15 +64,14 @@ namespace FireSchema.CS.Runtime.Core
         /// </summary>
         /// <param name="documentId">The ID of the document to retrieve.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the document data, or null if the document doesn't exist.</returns>
+        // Instance of the converter for manual use
+        private static readonly FirestoreDataConverter<T> _converter = new FirestoreDataConverter<T>();
+
         public virtual async Task<T?> GetAsync(string documentId)
         {
             var snapshot = await GetDocSnapshotAsync(documentId);
-            if (snapshot.Exists)
-            {
-                // The converter should handle populating the Id field
-                return snapshot.ConvertTo<T>();
-            }
-            return null;
+            // Manually call the internal converter method that handles ID
+            return _converter.FromFirestore(snapshot);
         }
 
         /// <summary>

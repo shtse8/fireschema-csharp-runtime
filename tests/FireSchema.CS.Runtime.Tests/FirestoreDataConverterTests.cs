@@ -1,6 +1,6 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework; // Use NUnit framework
 using FireSchema.CS.Runtime.Core;
-using Google.Cloud.Firestore;
+using Google.Cloud.Firestore; // Ensure Firestore is imported
 using System.Collections.Generic;
 
 namespace FireSchema.CS.Runtime.Tests
@@ -9,7 +9,7 @@ namespace FireSchema.CS.Runtime.Tests
     [FirestoreData]
     public class TestModel : IFirestoreDocument
     {
-        [FirestoreDocumentId]
+        [FirestoreDocumentId] // Keep short name as Google.Cloud.Firestore is imported
         public string Id { get; set; } = ""; // Initialize to avoid null warnings
 
         [FirestoreProperty("name")]
@@ -22,10 +22,10 @@ namespace FireSchema.CS.Runtime.Tests
         public string IgnoredProperty { get; set; } = "should-be-ignored";
     }
 
-    [TestClass]
+    [TestFixture] // NUnit attribute for test classes
     public class FirestoreDataConverterTests
     {
-        [TestMethod]
+        [Test] // NUnit attribute for test methods
         public void ToFirestore_ShouldExcludeIdProperty()
         {
             // Arrange
@@ -42,14 +42,15 @@ namespace FireSchema.CS.Runtime.Tests
             var dictionary = converter.ToFirestore(model);
 
             // Assert
-            Assert.IsNotNull(dictionary, "Resulting dictionary should not be null.");
-            Assert.IsFalse(dictionary.ContainsKey("Id"), "Dictionary should not contain the 'Id' property.");
-            Assert.IsFalse(dictionary.ContainsKey(nameof(TestModel.Id)), "Dictionary should not contain the 'Id' property (checked by C# name)."); // Double check
-            Assert.IsTrue(dictionary.ContainsKey("name"), "Dictionary should contain the 'name' property.");
-            Assert.AreEqual("Test Name", dictionary["name"]);
-            Assert.IsTrue(dictionary.ContainsKey("value"), "Dictionary should contain the 'value' property.");
-            Assert.AreEqual(42L, dictionary["value"]); // Firestore SDK often uses Int64 (long) for integers
-            Assert.IsFalse(dictionary.ContainsKey("IgnoredProperty"), "Dictionary should not contain properties without [FirestoreProperty].");
+            // Use NUnit's constraint-based assertion model
+            Assert.That(dictionary, Is.Not.Null, "Resulting dictionary should not be null.");
+            Assert.That(dictionary.ContainsKey("Id"), Is.False, "Dictionary should not contain the 'Id' property.");
+            Assert.That(dictionary.ContainsKey(nameof(TestModel.Id)), Is.False, "Dictionary should not contain the 'Id' property (checked by C# name)."); // Double check
+            Assert.That(dictionary.ContainsKey("name"), Is.True, "Dictionary should contain the 'name' property.");
+            Assert.That(dictionary["name"], Is.EqualTo("Test Name"));
+            Assert.That(dictionary.ContainsKey("value"), Is.True, "Dictionary should contain the 'value' property.");
+            Assert.That(dictionary["value"], Is.EqualTo(42L)); // Firestore SDK often uses Int64 (long) for integers
+            Assert.That(dictionary.ContainsKey("IgnoredProperty"), Is.False, "Dictionary should not contain properties without [FirestoreProperty].");
         }
 
         // --- FromFirestore tests require mocking DocumentSnapshot ---
@@ -57,7 +58,7 @@ namespace FireSchema.CS.Runtime.Tests
         //       or by creating mock DocumentSnapshot instances if possible.
 
         /*
-        [TestMethod]
+        [Test] // NUnit attribute for test methods
         public void FromFirestore_ShouldPopulateIdAndProperties()
         {
             // Arrange

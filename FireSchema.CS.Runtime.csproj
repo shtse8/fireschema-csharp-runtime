@@ -1,10 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework> <!-- Or netstandard2.1 / net6.0 etc. depending on target -->
+    <TargetFramework>net6.0</TargetFramework> <!-- Upgrade to net6.0 for better compatibility -->
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings> <!-- Be explicit for clarity -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo> <!-- Disable auto-generation -->
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute> <!-- Disable auto-generation -->
     <RootNamespace>FireSchema.CS.Runtime</RootNamespace>
     <AssemblyName>FireSchema.CS.Runtime</AssemblyName>
     <Version>0.1.0</Version> <!-- Initial version -->

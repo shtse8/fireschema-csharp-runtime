@@ -1,22 +1,24 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk"> <!-- Ensure SDK is specified -->
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework> <!-- Use a suitable .NET version for testing -->
+    <TargetFramework>net6.0</TargetFramework>
+    <OutputType>Library</OutputType> <!-- Explicitly set OutputType -->
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable> <!-- This project shouldn't be packed as a NuGet package -->
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings> <!-- Disable implicit usings -->
+    <IsTestProject>true</IsTestProject> <!-- Explicitly mark as test project -->
   </PropertyGroup>
-
-  <ItemGroup>
-    <!-- Reference the main runtime library project -->
-    <ProjectReference Include="..\..\src\FireSchema.CS.Runtime.csproj" />
-  </ItemGroup>
+<ItemGroup>
+  <!-- Restore ProjectReference -->
+  <ProjectReference Include="..\..\FireSchema.CS.Runtime.csproj" />
+</ItemGroup>
+  <!-- Remove extra closing ItemGroup tag -->
 
   <ItemGroup>
     <!-- Testing Framework Dependencies -->
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" /> <!-- Check for latest versions -->
-    <PackageReference Include="MSTest.TestAdapter" Version="2.2.10" />
-    <PackageReference Include="MSTest.TestFramework" Version="2.2.10" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" /> <!-- Update to a newer version compatible with net6.0+ -->
+    <PackageReference Include="NUnit" Version="3.13.3" /> <!-- Use NUnit framework -->
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" /> <!-- Use NUnit adapter -->
     <PackageReference Include="coverlet.collector" Version="3.1.2" />
     <!-- Add mocking library if needed, e.g., Moq -->
     <!-- <PackageReference Include="Moq" Version="4.18.4" /> -->
