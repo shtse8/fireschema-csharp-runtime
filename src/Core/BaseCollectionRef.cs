@@ -2,6 +2,7 @@ using Google.Cloud.Firestore;
 using System;
 using System.Threading.Tasks; // For async methods
 using System.Collections.Generic; // For IEnumerable
+using System.Linq.Expressions; // For query methods
 
 namespace FireSchema.CS.Runtime.Core
 {
@@ -118,16 +119,170 @@ namespace FireSchema.CS.Runtime.Core
         }
 
 
-        // --- TODO: Add UpdateAsync methods ---
-        // public virtual Task<WriteResult> UpdateAsync(string documentId, /* Update data representation */) { ... }
+        /// <summary>
+        /// Asynchronously updates the document with the specified ID using a builder pattern.
+        /// </summary>
+        /// <param name="documentId">The ID of the document to update.</param>
+        /// <param name="updateAction">An action that configures the update operations on a builder.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the WriteResult.</returns>
+        public virtual async Task<WriteResult> UpdateAsync(string documentId, Action<BaseUpdateBuilder<T>> updateAction)
+        {
+            if (string.IsNullOrEmpty(documentId)) throw new ArgumentNullException(nameof(documentId));
+            if (updateAction == null) throw new ArgumentNullException(nameof(updateAction));
 
-        // --- TODO: Add DeleteAsync method ---
-        // public virtual Task<WriteResult> DeleteAsync(string documentId) { ... }
+            var docRef = Doc(documentId);
+            // Note: This creates the base builder. Generated code might override this
+            // to provide a more specific builder if needed, but the base works.
+            var builder = new BaseUpdateBuilder<T>(docRef);
+            updateAction(builder); // Configure the builder via the provided action
 
-        // --- TODO: Add Query methods (returning a QueryBuilder) ---
-        // public virtual BaseQueryBuilder<T> Where(...) { ... }
-        // public virtual BaseQueryBuilder<T> OrderBy(...) { ... }
-        // public virtual BaseQueryBuilder<T> Limit(...) { ... }
+            return await builder.ApplyAsync(); // Apply the updates
+        }
 
+        /// <summary>
+        /// Asynchronously deletes the document with the specified ID.
+        /// </summary>
+        /// <param name="documentId">The ID of the document to delete.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the WriteResult.</returns>
+        public virtual async Task<WriteResult> DeleteAsync(string documentId)
+        {
+            if (string.IsNullOrEmpty(documentId)) throw new ArgumentNullException(nameof(documentId));
+            return await Doc(documentId).DeleteAsync();
+        }
+
+        // --- Query Methods ---
+
+        /// <summary>
+        /// Creates a query against the collection.
+        /// </summary>
+        /// <returns>A BaseQueryBuilder instance for constructing the query.</returns>
+        public virtual BaseQueryBuilder<T> Query()
+        {
+            // Pass the base CollectionReference to the builder
+            return new BaseQueryBuilder<T>(FirestoreCollection);
+        }
+
+        /// <summary>
+        /// Creates a query that filters the documents based on a specified field, operator, and value.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> Where<TField>(Expression<Func<T, TField>> fieldSelector, QueryOperator op, TField value)
+        {
+            return Query().Where(fieldSelector, op, value);
+        }
+
+        /// <summary>
+        /// Creates a query that sorts the documents by the specified field in ascending order.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> OrderBy<TField>(Expression<Func<T, TField>> fieldSelector)
+        {
+            return Query().OrderBy(fieldSelector);
+        }
+
+        /// <summary>
+        /// Creates a query that sorts the documents by the specified field in descending order.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> OrderByDescending<TField>(Expression<Func<T, TField>> fieldSelector)
+        {
+            return Query().OrderByDescending(fieldSelector);
+        }
+
+        /// <summary>
+        /// Creates a query that limits the number of documents returned.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> Limit(int limit)
+        {
+            return Query().Limit(limit);
+        }
+
+
+        /// <summary>
+        /// Creates a query that filters documents where the specified field's value is contained in the provided collection.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> WhereIn<TField>(Expression<Func<T, TField>> fieldSelector, IEnumerable<TField> values)
+        {
+            return Query().WhereIn(fieldSelector, values);
+        }
+
+        /// <summary>
+        /// Creates a query that filters documents where the specified field's value is NOT contained in the provided collection.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> WhereNotIn<TField>(Expression<Func<T, TField>> fieldSelector, IEnumerable<TField> values)
+        {
+            return Query().WhereNotIn(fieldSelector, values);
+        }
+
+        /// <summary>
+        /// Creates a query that filters documents where the specified array field contains any of the values in the provided collection.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> WhereArrayContainsAny<TField>(Expression<Func<T, IEnumerable<TField>>> fieldSelector, IEnumerable<TField> values)
+        {
+            return Query().WhereArrayContainsAny(fieldSelector, values);
+        }
+
+        /// <summary>
+        /// Creates a query that starts at the provided document snapshot.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> StartAt(DocumentSnapshot snapshot)
+        {
+            return Query().StartAt(snapshot);
+        }
+
+        /// <summary>
+        /// Creates a query that starts at the provided field values.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> StartAt(params object[] fieldValues)
+        {
+            return Query().StartAt(fieldValues);
+        }
+
+        /// <summary>
+        /// Creates a query that starts after the provided document snapshot.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> StartAfter(DocumentSnapshot snapshot)
+        {
+            return Query().StartAfter(snapshot);
+        }
+
+        /// <summary>
+        /// Creates a query that starts after the provided field values.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> StartAfter(params object[] fieldValues)
+        {
+            return Query().StartAfter(fieldValues);
+        }
+
+        /// <summary>
+        /// Creates a query that ends at the provided document snapshot.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> EndAt(DocumentSnapshot snapshot)
+        {
+            return Query().EndAt(snapshot);
+        }
+
+        /// <summary>
+        /// Creates a query that ends at the provided field values.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> EndAt(params object[] fieldValues)
+        {
+            return Query().EndAt(fieldValues);
+        }
+
+        /// <summary>
+        /// Creates a query that ends before the provided document snapshot.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> EndBefore(DocumentSnapshot snapshot)
+        {
+            return Query().EndBefore(snapshot);
+        }
+
+        /// <summary>
+        /// Creates a query that ends before the provided field values.
+        /// </summary>
+        public virtual BaseQueryBuilder<T> EndBefore(params object[] fieldValues)
+        {
+            return Query().EndBefore(fieldValues);
+        }
+
+        // --- TODO: Add other query methods (LimitToLast, StartAt, etc.) as needed ---
     }
 }

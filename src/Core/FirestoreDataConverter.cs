@@ -118,7 +118,7 @@ namespace FireSchema.CS.Runtime.Core
         /// Populates the property marked with [FirestoreDocumentId] with the snapshot's ID.
         /// This is intended for use after fetching a snapshot.
         /// </summary>
-        internal T FromFirestore(DocumentSnapshot snapshot) // Make internal
+        public T FromFirestore(DocumentSnapshot snapshot) // Make public for test access
         {
             if (!snapshot.Exists)
             {

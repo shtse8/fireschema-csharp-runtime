@@ -1,12 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk"> <!-- Ensure SDK is specified -->
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <OutputType>Library</OutputType> <!-- Explicitly set OutputType -->
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable> <!-- This project shouldn't be packed as a NuGet package -->
     <ImplicitUsings>disable</ImplicitUsings> <!-- Disable implicit usings -->
     <IsTestProject>true</IsTestProject> <!-- Explicitly mark as test project -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 <ItemGroup>
   <!-- Restore ProjectReference -->

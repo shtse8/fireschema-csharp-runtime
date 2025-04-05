@@ -5,23 +5,7 @@ using System.Collections.Generic;
 
 namespace FireSchema.CS.Runtime.Tests
 {
-    // Define a sample model for testing
-    [FirestoreData]
-    public class TestModel : IFirestoreDocument
-    {
-        [FirestoreDocumentId] // Keep short name as Google.Cloud.Firestore is imported
-        public string Id { get; set; } = ""; // Initialize to avoid null warnings
-
-        [FirestoreProperty("name")]
-        public string Name { get; set; } = "";
-
-        [FirestoreProperty("value")]
-        public int Value { get; set; }
-
-        // Property NOT marked with FirestoreProperty, should be ignored by default converter behavior
-        public string IgnoredProperty { get; set; } = "should-be-ignored";
-    }
-
+    // TestModel definition moved to TestModel.cs
     [TestFixture] // NUnit attribute for test classes
     public class FirestoreDataConverterTests
     {

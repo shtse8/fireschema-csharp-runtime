@@ -1,7 +1,10 @@
 using Google.Cloud.Firestore;
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Reflection; // Required for MemberInfo
 using System.Threading.Tasks;
+using System.Linq; // For Cast<T>
 
 namespace FireSchema.CS.Runtime.Core
 {
@@ -10,7 +13,7 @@ namespace FireSchema.CS.Runtime.Core
     /// Provides common functionality for constructing update operations.
     /// </summary>
     /// <typeparam name="T">The type of the document data (must implement IFirestoreDocument).</typeparam>
-    public abstract class BaseUpdateBuilder<T> where T : class, IFirestoreDocument, new()
+    public class BaseUpdateBuilder<T> where T : class, IFirestoreDocument, new() // Removed 'abstract'
     {
         protected readonly DocumentReference _docRef;
         protected readonly Dictionary<FieldPath, object> _updates = new Dictionary<FieldPath, object>();
@@ -19,7 +22,7 @@ namespace FireSchema.CS.Runtime.Core
         /// Initializes a new instance of the BaseUpdateBuilder class.
         /// </summary>
         /// <param name="docRef">The DocumentReference to update.</param>
-        protected BaseUpdateBuilder(DocumentReference docRef)
+        internal BaseUpdateBuilder(DocumentReference docRef) // Changed from protected to internal
         {
             _docRef = docRef ?? throw new ArgumentNullException(nameof(docRef));
         }
@@ -46,6 +49,21 @@ namespace FireSchema.CS.Runtime.Core
         public virtual BaseUpdateBuilder<T> Set(string fieldPath, object value)
         {
             return Set(new FieldPath(fieldPath.Split('.')), value);
+        }
+
+        /// <summary>
+        /// Adds a field update operation using a type-safe expression.
+        /// Relies on FirestorePropertyAttribute to determine the field name.
+        /// </summary>
+        /// <typeparam name="TField">The type of the field.</typeparam>
+        /// <param name="fieldSelector">An expression selecting the field to update (e.g., m => m.Name).</param>
+        /// <param name="value">The new value for the field.</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> Set<TField>(Expression<Func<T, TField>> fieldSelector, TField value)
+        {
+            var fieldPath = GetFieldPath(fieldSelector);
+            _updates[fieldPath] = value!; // Allow null if TField is nullable
+            return this;
         }
 
         /// <summary>
@@ -88,10 +106,114 @@ namespace FireSchema.CS.Runtime.Core
             return Set(fieldPath, FieldValue.ServerTimestamp);
         }
 
-        // --- TODO: Add Increment, ArrayUnion, ArrayRemove methods ---
-        // public virtual BaseUpdateBuilder<T> Increment(FieldPath fieldPath, double value) => Set(fieldPath, FieldValue.Increment(value));
-        // public virtual BaseUpdateBuilder<T> ArrayUnion(FieldPath fieldPath, params object[] values) => Set(fieldPath, FieldValue.ArrayUnion(values));
-        // public virtual BaseUpdateBuilder<T> ArrayRemove(FieldPath fieldPath, params object[] values) => Set(fieldPath, FieldValue.ArrayRemove(values));
+        /// <summary>
+        /// Adds an operation to atomically increment the specified numeric field.
+        /// </summary>
+        /// <param name="fieldPath">The path to the numeric field to increment.</param>
+        /// <param name="value">The value to increment by (can be negative).</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> Increment(FieldPath fieldPath, double value)
+        {
+             return Set(fieldPath, FieldValue.Increment(value));
+        }
+
+        /// <summary>
+        /// Adds an operation to atomically increment the specified numeric field using a string path.
+        /// </summary>
+        /// <param name="fieldPath">The dot-separated path to the numeric field to increment.</param>
+        /// <param name="value">The value to increment by (can be negative).</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> Increment(string fieldPath, double value)
+        {
+             return Set(fieldPath, FieldValue.Increment(value));
+        }
+
+        /// <summary>
+        /// Adds an operation to atomically increment the specified numeric field using a type-safe expression.
+        /// </summary>
+        /// <typeparam name="TField">The type of the numeric field (e.g., int, double).</typeparam>
+        /// <param name="fieldSelector">An expression selecting the field to increment.</param>
+        /// <param name="value">The value to increment by (can be negative).</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> Increment<TField>(Expression<Func<T, TField>> fieldSelector, double value)
+            where TField : struct // Basic constraint for numeric types
+        {
+             var fieldPath = GetFieldPath(fieldSelector);
+             return Set(fieldPath, FieldValue.Increment(value));
+        }
+
+
+        /// <summary>
+        /// Adds an operation to atomically add elements to an array field, ensuring uniqueness.
+        /// </summary>
+        /// <param name="fieldPath">The path to the array field.</param>
+        /// <param name="values">The elements to add.</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> ArrayUnion(FieldPath fieldPath, params object[] values)
+        {
+             return Set(fieldPath, FieldValue.ArrayUnion(values));
+        }
+
+        /// <summary>
+        /// Adds an operation to atomically add elements to an array field using a string path.
+        /// </summary>
+        /// <param name="fieldPath">The dot-separated path to the array field.</param>
+        /// <param name="values">The elements to add.</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> ArrayUnion(string fieldPath, params object[] values)
+        {
+             return Set(fieldPath, FieldValue.ArrayUnion(values));
+        }
+
+        /// <summary>
+        /// Adds an operation to atomically add elements to an array field using a type-safe expression.
+        /// </summary>
+        /// <typeparam name="TField">The type of the array elements.</typeparam>
+        /// <param name="fieldSelector">An expression selecting the array field.</param>
+        /// <param name="values">The elements to add.</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> ArrayUnion<TField>(Expression<Func<T, IEnumerable<TField>>> fieldSelector, params TField[] values)
+        {
+             var fieldPath = GetFieldPath(fieldSelector);
+             // Need to cast object[] to TField[]? Firestore SDK might handle object[] directly. Let's assume object[] is fine.
+             return Set(fieldPath, FieldValue.ArrayUnion(values.Cast<object>().ToArray())); // Cast IEnumerable<TField> (params TField[]) to object[]
+        }
+
+
+        /// <summary>
+        /// Adds an operation to atomically remove all instances of the specified elements from an array field.
+        /// </summary>
+        /// <param name="fieldPath">The path to the array field.</param>
+        /// <param name="values">The elements to remove.</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> ArrayRemove(FieldPath fieldPath, params object[] values)
+        {
+             return Set(fieldPath, FieldValue.ArrayRemove(values));
+        }
+
+        /// <summary>
+        /// Adds an operation to atomically remove all instances of the specified elements from an array field using a string path.
+        /// </summary>
+        /// <param name="fieldPath">The dot-separated path to the array field.</param>
+        /// <param name="values">The elements to remove.</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> ArrayRemove(string fieldPath, params object[] values)
+        {
+             return Set(fieldPath, FieldValue.ArrayRemove(values));
+        }
+
+        /// <summary>
+        /// Adds an operation to atomically remove all instances of the specified elements from an array field using a type-safe expression.
+        /// </summary>
+        /// <typeparam name="TField">The type of the array elements.</typeparam>
+        /// <param name="fieldSelector">An expression selecting the array field.</param>
+        /// <param name="values">The elements to remove.</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> ArrayRemove<TField>(Expression<Func<T, IEnumerable<TField>>> fieldSelector, params TField[] values)
+        {
+             var fieldPath = GetFieldPath(fieldSelector);
+             return Set(fieldPath, FieldValue.ArrayRemove(values.Cast<object>().ToArray())); // Cast IEnumerable<TField> (params TField[]) to object[]
+        }
 
 
         /// <summary>
@@ -107,5 +229,31 @@ namespace FireSchema.CS.Runtime.Core
             }
             return await _docRef.UpdateAsync(_updates);
         }
-    }
-}
+
+        /// <summary>
+        /// Extracts the Firestore field path from a member expression.
+        /// Relies on FirestorePropertyAttribute.
+        /// </summary>
+        protected FieldPath GetFieldPath<TField>(Expression<Func<T, TField>> fieldSelector)
+        {
+            if (!(fieldSelector.Body is MemberExpression memberExpression))
+            {
+                throw new ArgumentException("Selector must be a MemberExpression.", nameof(fieldSelector));
+            }
+
+            var member = memberExpression.Member;
+            // Correct namespace for FirestorePropertyAttribute
+            var firestorePropertyAttribute = member.GetCustomAttribute<Google.Cloud.Firestore.FirestorePropertyAttribute>();
+
+            if (firestorePropertyAttribute == null || string.IsNullOrEmpty(firestorePropertyAttribute.Name))
+            {
+                // Fallback to member name if attribute is missing or has no name (though it should have one)
+                // Consider throwing an exception if strict attribute usage is required.
+                 return new FieldPath(member.Name);
+                // throw new InvalidOperationException($"Member '{member.Name}' must have a FirestorePropertyAttribute with a non-empty Name.");
+            }
+
+            return new FieldPath(firestorePropertyAttribute.Name);
+        }
+    } // End of BaseUpdateBuilder<T> class
+} // End of namespace

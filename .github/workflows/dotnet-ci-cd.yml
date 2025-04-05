@@ -1,0 +1,64 @@
+name: .NET CI/CD for FireSchema.CS.Runtime
+
+on:
+  push:
+    branches: [ "main" ] # Trigger on push to main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.csproj'
+      - '*.sln'
+      - '.github/workflows/dotnet-ci-cd.yml'
+  pull_request:
+    branches: [ "main" ] # Trigger on PRs targeting main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.csproj'
+      - '*.sln'
+      - '.github/workflows/dotnet-ci-cd.yml'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # Use Ubuntu runner
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x' # Match project target framework if possible, or use LTS
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Start Firestore Emulator
+      # We need the emulator for integration tests
+      # Using gcloud emulator is common, requires gcloud setup in the runner
+      # Alternatively, use a Docker container with the emulator
+      run: |
+        echo "Starting Firestore emulator..."
+        gcloud components install beta --quiet
+        gcloud components install cloud-firestore-emulator --quiet
+        gcloud beta emulators firestore start --host-port="localhost:8080" &
+        sleep 5 # Give emulator time to start
+
+    - name: Test
+      # Set environment variable for tests to find the emulator
+      env:
+        FIRESTORE_EMULATOR_HOST: "localhost:8080"
+      run: dotnet test --configuration Release --no-build --verbosity normal
+
+    - name: Pack NuGet package
+      if: startsWith(github.ref, 'refs/tags/v') # Only pack on tag pushes
+      run: dotnet pack --configuration Release --no-build -o ./nuget-package
+
+    - name: Publish NuGet package
+      if: startsWith(github.ref, 'refs/tags/v') # Only publish on tag pushes
+      run: dotnet nuget push ./nuget-package/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

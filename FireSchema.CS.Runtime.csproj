@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework> <!-- Upgrade to net6.0 for better compatibility -->
+    <TargetFramework>net9.0</TargetFramework> <!-- Target net9.0 as requested -->
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings> <!-- Be explicit for clarity -->
@@ -31,6 +31,9 @@
     <!-- Add dependency on Google Firestore SDK -->
     <PackageReference Include="Google.Cloud.Firestore" Version="3.4.0" /> <!-- Check for latest version -->
     <!-- Add other dependencies if needed -->
+
+    <!-- Add NUnit reference here again as a workaround for test project build issue -->
+    <PackageReference Include="NUnit" Version="3.13.3" />
   </ItemGroup>
 
 </Project>
