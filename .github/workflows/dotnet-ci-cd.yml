@@ -61,7 +61,7 @@ jobs:
 
     - name: Pack NuGet package
       if: startsWith(github.ref, 'refs/tags/v') # Only pack on tag pushes
-      run: dotnet pack FireSchema.CS.Runtime.csproj --configuration Release --no-build -o ./nuget-package
+      run: dotnet pack FireSchema.CS.Runtime.csproj --configuration Release -o ./nuget-package
 
     - name: Publish NuGet package
       if: startsWith(github.ref, 'refs/tags/v') # Only publish on tag pushes
