@@ -22,7 +22,7 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 jobs:
-  build-and-test:
+  build-pack-publish-test: # Renamed job for clarity
     runs-on: ubuntu-latest # Use Ubuntu runner
 
     steps:
@@ -34,19 +34,28 @@ jobs:
       with:
         dotnet-version: '8.0.x' # Match project target framework if possible, or use LTS
 
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: Restore main project dependencies
+      run: dotnet restore FireSchema.CS.Runtime.csproj
 
-    # Build step restored
-    - name: Build
+    - name: Build main project
+      run: dotnet build FireSchema.CS.Runtime.csproj --configuration Release --no-restore
+
+    # Restore and Build again right before packing
+    - name: Restore all dependencies again
+      run: dotnet restore
+    - name: Build all projects again
       run: dotnet build --configuration Release --no-restore
 
-    # Pack step moved here and --no-build added
+    # Pack step without --no-build or --no-restore
     - name: Pack NuGet package
       if: startsWith(github.ref, 'refs/tags/v') # Only pack on tag pushes
-      run: dotnet pack FireSchema.CS.Runtime.csproj --configuration Release --no-build -o ./nuget-package
+      run: dotnet pack FireSchema.CS.Runtime.csproj --configuration Release -o ./nuget-package
 
-    # Emulator setup remains before test
+    - name: Publish NuGet package
+      if: startsWith(github.ref, 'refs/tags/v') # Only publish on tag pushes
+      run: dotnet nuget push ./nuget-package/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+    # Emulator setup moved just before test
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
       with:
@@ -60,14 +69,9 @@ jobs:
         gcloud beta emulators firestore start --host-port="localhost:8080" &
         sleep 5 # Give emulator time to start
 
-    # Test step moved after pack and --no-build added
+    # Test step uses --no-build as the projects were just built
     - name: Test
       # Set environment variable for tests to find the emulator
       env:
         FIRESTORE_EMULATOR_HOST: "localhost:8080"
       run: dotnet test --configuration Release --no-build --verbosity normal
-
-    # Publish step remains last
-    - name: Publish NuGet package
-      if: startsWith(github.ref, 'refs/tags/v') # Only publish on tag pushes
-      run: dotnet nuget push ./nuget-package/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
