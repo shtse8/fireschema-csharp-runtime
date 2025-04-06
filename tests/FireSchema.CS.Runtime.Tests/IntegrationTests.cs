@@ -470,6 +470,58 @@ namespace FireSchema.CS.Runtime.Tests
             Assert.That(retrievedItem!.Tags, Is.EquivalentTo(new List<string> { "x", "z" }), "Should contain only x, z.");
         }
 
+        [Test]
+        public async Task UpdateAsync_WithDeleteExpression_ShouldRemoveField()
+        {
+            // Arrange
+            var docId = "delete-expr-test-id";
+            var initialItem = new TestModel 
+            {
+                 Id = docId, 
+                 Name = "Delete Expression Test", 
+                 Value = 1300,
+                 OptionalValue = 99 // Add a field to delete
+            };
+            await _testCollection.SetAsync(docId, initialItem);
+
+            // Act: Delete the OptionalValue field using type-safe expression
+            await _testCollection.UpdateAsync(docId, builder => builder.Delete(m => m.OptionalValue));
+
+            // Assert
+            var snapshot = await _testCollection.Doc(docId).GetSnapshotAsync();
+            Assert.That(snapshot.Exists, Is.True);
+            Assert.That(snapshot.ContainsField("OptionalValue"), Is.False, "OptionalValue field should be removed.");
+            Assert.That(snapshot.GetValue<string>("Name"), Is.EqualTo(initialItem.Name)); // Ensure other fields remain
+        }
+
+        [Test]
+        public async Task UpdateAsync_WithSetServerTimestampExpression_ShouldSetTimestamp()
+        {
+            // Arrange
+            var docId = "timestamp-expr-test-id";
+            var initialItem = new TestModel 
+            {
+                 Id = docId, 
+                 Name = "Timestamp Expression Test", 
+                 Value = 1400
+                 // CreatedAt will be set by the update
+            };
+            await _testCollection.SetAsync(docId, initialItem);
+            var initialTimestamp = Timestamp.GetCurrentTimestamp(); // Get timestamp before update for comparison
+            await Task.Delay(50); // Ensure server timestamp is slightly different
+
+            // Act: Set the CreatedAt field using type-safe expression
+            await _testCollection.UpdateAsync(docId, builder => builder.SetServerTimestamp(m => m.CreatedAt));
+
+            // Assert
+            var retrievedItem = await _testCollection.GetAsync(docId);
+            Assert.That(retrievedItem, Is.Not.Null);
+            Assert.That(retrievedItem!.CreatedAt, Is.Not.Null, "CreatedAt should be set.");
+            Assert.That(retrievedItem.CreatedAt.Value.ToDateTime() > initialTimestamp.ToDateTime(), Is.True, "CreatedAt should be a recent server timestamp.");
+            Assert.That(retrievedItem.Name, Is.EqualTo(initialItem.Name)); // Ensure other fields remain
+        }
+
+
         // TODO: Add more complex Update tests
 
     } // End of IntegrationTests class

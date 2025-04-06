@@ -87,6 +87,19 @@ namespace FireSchema.CS.Runtime.Core
         }
 
         /// <summary>
+        /// Adds an operation to delete the specified field using a type-safe expression.
+        /// </summary>
+        /// <typeparam name="TField">The type of the field.</typeparam>
+        /// <param name="fieldSelector">An expression selecting the field to delete.</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> Delete<TField>(Expression<Func<T, TField>> fieldSelector)
+        {
+             var fieldPath = GetFieldPath(fieldSelector);
+             return Set(fieldPath, FieldValue.Delete);
+        }
+
+
+        /// <summary>
         /// Adds an operation to set the specified field to the server timestamp.
         /// </summary>
         /// <param name="fieldPath">The path to the field to update.</param>
@@ -105,6 +118,19 @@ namespace FireSchema.CS.Runtime.Core
         {
             return Set(fieldPath, FieldValue.ServerTimestamp);
         }
+
+        /// <summary>
+        /// Adds an operation to set the specified field to the server timestamp using a type-safe expression.
+        /// </summary>
+        /// <typeparam name="TField">The type of the field (should correspond to Timestamp or DateTime).</typeparam>
+        /// <param name="fieldSelector">An expression selecting the field to update.</param>
+        /// <returns>The current update builder instance for chaining.</returns>
+        public virtual BaseUpdateBuilder<T> SetServerTimestamp<TField>(Expression<Func<T, TField>> fieldSelector)
+        {
+             var fieldPath = GetFieldPath(fieldSelector);
+             return Set(fieldPath, FieldValue.ServerTimestamp);
+        }
+
 
         /// <summary>
         /// Adds an operation to atomically increment the specified numeric field.

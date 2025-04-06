@@ -22,5 +22,12 @@ namespace FireSchema.CS.Runtime.Tests
 
         [FirestoreProperty("tags")]
         public List<string> Tags { get; set; } = new List<string>(); // Add a list for array tests
+
+        [FirestoreProperty("optionalValue")] // Added for Delete test
+        public int? OptionalValue { get; set; } // Nullable int
+
+        [FirestoreProperty("createdAt")] // Added for ServerTimestamp test
+        [ServerTimestamp] // Mark for server-side timestamp population on create/set
+        public Timestamp? CreatedAt { get; set; } // Nullable Timestamp
     }
 }
