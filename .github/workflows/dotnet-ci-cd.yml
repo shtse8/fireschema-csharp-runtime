@@ -37,9 +37,16 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
+    # Build step restored
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
+    # Pack step moved here and --no-build added
+    - name: Pack NuGet package
+      if: startsWith(github.ref, 'refs/tags/v') # Only pack on tag pushes
+      run: dotnet pack FireSchema.CS.Runtime.csproj --configuration Release --no-build -o ./nuget-package
+
+    # Emulator setup remains before test
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
       with:
@@ -53,18 +60,14 @@ jobs:
         gcloud beta emulators firestore start --host-port="localhost:8080" &
         sleep 5 # Give emulator time to start
 
+    # Test step moved after pack and --no-build added
     - name: Test
       # Set environment variable for tests to find the emulator
       env:
         FIRESTORE_EMULATOR_HOST: "localhost:8080"
-      run: dotnet test --configuration Release --verbosity normal
+      run: dotnet test --configuration Release --no-build --verbosity normal
 
-    - name: Pack NuGet package
-      if: startsWith(github.ref, 'refs/tags/v') # Only pack on tag pushes
-      run: |
-        dotnet restore FireSchema.CS.Runtime.csproj
-        dotnet pack FireSchema.CS.Runtime.csproj --configuration Release --no-build -o ./nuget-package
-
+    # Publish step remains last
     - name: Publish NuGet package
       if: startsWith(github.ref, 'refs/tags/v') # Only publish on tag pushes
       run: dotnet nuget push ./nuget-package/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
