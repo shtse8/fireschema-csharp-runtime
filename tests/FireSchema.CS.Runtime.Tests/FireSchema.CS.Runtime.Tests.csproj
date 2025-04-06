@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk"> <!-- Ensure SDK is specified -->
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <OutputType>Library</OutputType> <!-- Explicitly set OutputType -->
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable> <!-- This project shouldn't be packed as a NuGet package -->
