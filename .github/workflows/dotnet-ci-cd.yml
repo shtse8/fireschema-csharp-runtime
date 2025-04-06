@@ -3,6 +3,8 @@ name: .NET CI/CD for FireSchema.CS.Runtime
 on:
   push:
     branches: [ "main" ] # Trigger on push to main
+    tags:
+      - 'v*' # Also trigger on version tags like v0.1.0, v1.2.3
     paths:
       - 'src/**'
       - 'tests/**'
