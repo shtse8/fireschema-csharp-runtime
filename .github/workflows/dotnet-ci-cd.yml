@@ -57,11 +57,11 @@ jobs:
       # Set environment variable for tests to find the emulator
       env:
         FIRESTORE_EMULATOR_HOST: "localhost:8080"
-      run: dotnet test --configuration Release --no-build --verbosity normal
+      run: dotnet test --configuration Release --verbosity normal
 
     - name: Pack NuGet package
       if: startsWith(github.ref, 'refs/tags/v') # Only pack on tag pushes
-      run: dotnet pack FireSchema.CS.Runtime.csproj --configuration Release -o ./nuget-package # Removed --no-build
+      run: dotnet pack FireSchema.CS.Runtime.csproj --configuration Release --no-build -o ./nuget-package
 
     - name: Publish NuGet package
       if: startsWith(github.ref, 'refs/tags/v') # Only publish on tag pushes
