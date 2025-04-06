@@ -38,14 +38,16 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        # No authentication needed for emulator
+        install_components: 'beta, cloud-firestore-emulator' # Install components via the action
+
     - name: Start Firestore Emulator
       # We need the emulator for integration tests
-      # Using gcloud emulator is common, requires gcloud setup in the runner
-      # Alternatively, use a Docker container with the emulator
       run: |
         echo "Starting Firestore emulator..."
-        gcloud components install beta --quiet
-        gcloud components install cloud-firestore-emulator --quiet
         gcloud beta emulators firestore start --host-port="localhost:8080" &
         sleep 5 # Give emulator time to start
 
