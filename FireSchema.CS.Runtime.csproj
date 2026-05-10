@@ -33,7 +33,7 @@
     <!-- Add other dependencies if needed -->
 
     <!-- Add NUnit reference here again as a workaround for test project build issue -->
-    <PackageReference Include="NUnit" Version="3.13.3" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
   </ItemGroup>
 
 </Project>
