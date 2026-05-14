@@ -29,7 +29,7 @@
 
   <ItemGroup>
     <!-- Add dependency on Google Firestore SDK -->
-    <PackageReference Include="Google.Cloud.Firestore" Version="3.4.0" /> <!-- Check for latest version -->
+    <PackageReference Include="Google.Cloud.Firestore" Version="4.2.0" /> <!-- Check for latest version -->
     <!-- Add other dependencies if needed -->
 
     <!-- Add NUnit reference here again as a workaround for test project build issue -->
