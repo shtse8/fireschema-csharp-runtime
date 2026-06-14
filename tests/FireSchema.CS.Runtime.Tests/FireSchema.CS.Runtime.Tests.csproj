@@ -19,7 +19,7 @@
   <ItemGroup>
     <!-- Testing Framework Dependencies -->
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" /> <!-- Update to a newer version compatible with net6.0+ -->
-    <PackageReference Include="NUnit" Version="3.13.3" /> <!-- Use NUnit framework -->
+    <PackageReference Include="NUnit" Version="4.6.1" /> <!-- Use NUnit framework -->
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" /> <!-- Use NUnit adapter -->
     <PackageReference Include="coverlet.collector" Version="3.1.2" />
     <!-- Add mocking library if needed, e.g., Moq -->
